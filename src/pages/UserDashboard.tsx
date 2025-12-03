@@ -308,8 +308,18 @@ export const UserDashboard = () => {
               FURRY HUB
             </h1>
           </div>
-          <div className="text-sm text-gray-600">
-            Welcome back, {user?.firstName || 'User'}!
+          <div className="flex items-center space-x-3">
+            <div className="text-sm text-gray-600">
+              Welcome back, {user?.firstName || 'User'}!
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="rounded-full bg-red-500 hover:bg-red-600 text-white hover:text-white w-10 h-10"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
@@ -627,6 +637,7 @@ export const UserDashboard = () => {
         pets={pets}
         onPetSelected={handlePetSelect}
         serviceName={selectedService?.title || ""}
+        onAddNewPet={() => setIsAddPetModalOpen(true)}
       />
 
       {/* Profile Dialog */}

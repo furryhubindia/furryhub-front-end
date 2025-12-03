@@ -21,7 +21,7 @@ import cabPet from "@/assets/cab-pet.png";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState("");
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
@@ -119,7 +119,12 @@ const Index = () => {
                   onClick={() => {
                     if (service.title === "HOME") {
                       if (isAuthenticated) {
-                        setShowLogoutConfirm(true);
+                        // Navigate to appropriate dashboard based on user role
+                        if (user?.role === 'PROVIDER') {
+                          navigate("/furry-squad-dashboard");
+                        } else {
+                          navigate("/dashboard");
+                        }
                       } else {
                         navigate("/home");
                       }

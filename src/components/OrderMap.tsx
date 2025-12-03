@@ -43,9 +43,9 @@ const MapController: React.FC<MapControllerProps> = ({
   onGeofenceAlert
 }) => {
   const map = useMap();
-  const markerClusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
-  const routingControlRef = useRef<L.Routing.Control | null>(null);
-  const heatmapLayerRef = useRef<L.HeatLayer | null>(null);
+  const markerClusterGroupRef = useRef<any>(null);
+  const routingControlRef = useRef<any>(null);
+  const heatmapLayerRef = useRef<any>(null);
   const providerMarkerRef = useRef<L.Marker | null>(null);
   const geofenceCircleRef = useRef<L.Circle | null>(null);
 
@@ -74,23 +74,26 @@ const MapController: React.FC<MapControllerProps> = ({
 
     const validBookings = bookings.filter(b => b.latitude && b.longitude);
 
-    if (showHeatmap && validBookings.length > 0) {
-      // Create heatmap data
-      const heatData: [number, number, number][] = validBookings.map(booking => [
-        booking.latitude!,
-        booking.longitude!,
-        booking.totalPrice / 100 // Intensity based on order value
-      ]);
+    if (showHeatmap && validBookings.length > 0 && HeatLayer) {
+      try {
+        // Create heatmap data
+        const heatData: [number, number, number][] = validBookings.map(booking => [
+          booking.latitude!,
+          booking.longitude!,
+          booking.totalPrice / 100 // Intensity based on order value
+        ]);
 
-      // @ts-ignore - leaflet.heat types not properly defined
-      heatmapLayerRef.current = L.heatLayer(heatData, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 10,
-        max: 1.0,
-        gradient: { 0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' }
-      }).addTo(map);
-    } else if (showClustering && validBookings.length > 0) {
+        heatmapLayerRef.current = HeatLayer(heatData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 10,
+          max: 1.0,
+          gradient: { 0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' }
+        }).addTo(map);
+      } catch (error) {
+        console.warn('Failed to create heatmap:', error);
+      }
+    }
       // @ts-ignore - markercluster types
       markerClusterGroupRef.current = L.markerClusterGroup({
         chunkedLoading: true,
@@ -168,22 +171,25 @@ const MapController: React.FC<MapControllerProps> = ({
     }
 
     // Add routing if enabled and we have multiple points
-    if (showRouting && validBookings.length > 1 && providerLocation) {
-      const waypoints = [
-        L.latLng(providerLocation.lat, providerLocation.lng),
-        ...validBookings.map(b => L.latLng(b.latitude!, b.longitude!))
-      ];
+    if (showRouting && validBookings.length > 1 && providerLocation && Routing) {
+      try {
+        const waypoints = [
+          L.latLng(providerLocation.lat, providerLocation.lng),
+          ...validBookings.map(b => L.latLng(b.latitude!, b.longitude!))
+        ];
 
-      // @ts-ignore - routing machine types
-      routingControlRef.current = L.Routing.control({
-        waypoints,
-        routeWhileDragging: false,
-        addWaypoints: false,
-        createMarker: () => null, // Don't create default markers
-        lineOptions: {
-          styles: [{ color: 'blue', weight: 4, opacity: 0.7 }]
-        }
-      }).addTo(map);
+        routingControlRef.current = Routing.control({
+          waypoints,
+          routeWhileDragging: false,
+          addWaypoints: false,
+          createMarker: () => null, // Don't create default markers
+          lineOptions: {
+            styles: [{ color: 'blue', weight: 4, opacity: 0.7 }]
+          }
+        }).addTo(map);
+      } catch (error) {
+        console.warn('Failed to create routing control:', error);
+      }
     }
 
     // Fit bounds to show all markers

@@ -203,19 +203,30 @@ export const FurrySquadDashboard = () => {
           variant: "default",
         });
       } else {
-        await providerApi.cancelBooking(bookingId);
-        setBookings(prev =>
-          prev.map(booking =>
-            booking.id === bookingId
-              ? { ...booking, status: "CANCELLED" }
-              : booking
-          )
-        );
-        toast({
-          title: "Booking Cancelled",
-          description: "You have cancelled this booking.",
-          variant: "default",
-        });
+        try {
+          await providerApi.cancelBooking(bookingId);
+          setBookings(prev =>
+            prev.map(booking =>
+              booking.id === bookingId
+                ? { ...booking, status: "CANCELLED" }
+                : booking
+            )
+          );
+          toast({
+            title: "Booking Rejected",
+            description: "You have rejected this booking request.",
+            variant: "default",
+          });
+        } catch (cancelError) {
+          console.error('Failed to reject booking:', cancelError);
+          // If cancel fails, just remove from local state to hide the booking
+          setBookings(prev => prev.filter(booking => booking.id !== bookingId));
+          toast({
+            title: "Booking Hidden",
+            description: "This booking request has been hidden from your view.",
+            variant: "default",
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to update booking:', err);

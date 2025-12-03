@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { AddPetModal } from "@/components/AddPetModal";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export const BookingModal = ({ isOpen, onClose, serviceName }: BookingModalProps
   const [userPets, setUserPets] = useState<PetDTO[]>([]);
   const [selectedPetDetails, setSelectedPetDetails] = useState<PetDTO | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showAddPetModal, setShowAddPetModal] = useState(false);
 
   // Fetch user's pets when modal opens
   useEffect(() => {
@@ -79,10 +81,42 @@ export const BookingModal = ({ isOpen, onClose, serviceName }: BookingModalProps
     onClose();
   };
 
+  const handlePetAdded = async () => {
+    // Refresh pets list after adding a new pet
+    if (user) {
+      try {
+        const profile = await customerApi.getProfile();
+        const pets = await customerApi.getPets(profile.id);
+        setUserPets(pets);
+        setShowAddPetModal(false);
+      } catch (error) {
+        console.error('Failed to refresh pets:', error);
+      }
+    }
+  };
+
   const handleBook = async () => {
     if (!user) {
       toast({
         title: "Please login first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (userPets.length === 0) {
+      toast({
+        title: "Please add a pet first",
+        description: "You need to register at least one pet before booking services.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedPet) {
+      toast({
+        title: "Please select a pet",
+        description: "Select which pet you want to book services for.",
         variant: "destructive",
       });
       return;
@@ -155,26 +189,39 @@ export const BookingModal = ({ isOpen, onClose, serviceName }: BookingModalProps
           {/* Pet Selection Dropdown */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">Select Your Pet</Label>
-            <Select
-              value={selectedPet?.toString() || ""}
-              onValueChange={(value) => {
-                const petId = parseInt(value);
-                setSelectedPet(petId);
-                const pet = userPets.find(p => p.id === petId);
-                setSelectedPetDetails(pet || null);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a pet" />
-              </SelectTrigger>
-              <SelectContent>
-                {userPets.map((pet) => (
-                  <SelectItem key={pet.id} value={pet.id.toString()}>
-                    {pet.name} - {pet.breed}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {userPets.length === 0 ? (
+              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 font-medium mb-2">No pets registered yet</p>
+                <p className="text-blue-600 text-sm mb-3">You need to register a pet before booking services.</p>
+                <Button
+                  onClick={() => setShowAddPetModal(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Add Your First Pet
+                </Button>
+              </div>
+            ) : (
+              <Select
+                value={selectedPet?.toString() || ""}
+                onValueChange={(value) => {
+                  const petId = parseInt(value);
+                  setSelectedPet(petId);
+                  const pet = userPets.find(p => p.id === petId);
+                  setSelectedPetDetails(pet || null);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a pet" />
+                </SelectTrigger>
+                <SelectContent>
+                  {userPets.map((pet) => (
+                    <SelectItem key={pet.id} value={pet.id.toString()}>
+                      {pet.name} - {pet.breed}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Selected Pet Details */}

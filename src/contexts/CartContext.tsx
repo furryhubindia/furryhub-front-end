@@ -122,7 +122,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             item.packageId === packageId ? { ...item, qty: item.qty + qty } : item
           );
         }
-        return [...prev, { packageId, name: `Package ${packageId}`, price: 0, type: 'grooming', qty }];
+        // For now, use a generic name since we don't have package details
+        return [...prev, { packageId, name: `Service Package ${packageId}`, price: 0, type: 'grooming', qty }];
       });
     }
   };
